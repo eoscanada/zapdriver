@@ -122,17 +122,14 @@ func (c *core) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	lbls.mutex.RUnlock()
 
 	fields = append(fields, labelsField(c.allLabels()))
-	fields = c.withSourceLocation(ent, fields)
-	if c.config.ServiceName != "" {
-		fields = c.withServiceContext(c.config.ServiceName, fields)
-	}
 	if c.config.ReportAllErrors && zapcore.ErrorLevel.Enabled(ent.Level) {
+		fields = c.withSourceLocation(ent, fields)
 		fields = c.withErrorReport(ent, fields)
-		if c.config.ServiceName == "" {
-			// A service name was not set but error report needs it
-			// So attempt to add a generic service name
-			fields = c.withServiceContext("unknown", fields)
+		serviceName := "unknown"
+		if c.config.ServiceName != "" {
+			serviceName = c.config.ServiceName
 		}
+		fields = c.withServiceContext(serviceName, fields)
 	}
 
 	c.tempLabels.reset()

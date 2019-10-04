@@ -283,9 +283,9 @@ func TestWriteReportAllErrors(t *testing.T) {
 
 	context := logs.All()[0].ContextMap()[contextKey].(map[string]interface{})
 	rLocation := context["reportLocation"].(map[string]interface{})
-	assert.Contains(t, rLocation["filePath"], "github.com/blendle/zapdriver/core_test.go")
+	assert.Regexp(t, "/zapdriver/core_test.go", rLocation["filePath"])
 	assert.Equal(t, strconv.Itoa(line), rLocation["lineNumber"])
-	assert.Equal(t, "github.com/blendle/zapdriver.TestWriteReportAllErrors", rLocation["functionName"])
+	assert.Regexp(t, "zapdriver.TestWriteReportAllErrors$", rLocation["functionName"])
 
 	// Assert that a service context was attached even though service name was not set
 	serviceContext := logs.All()[0].ContextMap()[serviceContextKey].(map[string]interface{})
@@ -299,11 +299,12 @@ func TestWriteServiceContext(t *testing.T) {
 		permLabels: newLabels(),
 		tempLabels: newLabels(),
 		config: driverConfig{
-			ServiceName: "test service",
+			ReportAllErrors: true,
+			ServiceName:     "test service",
 		},
 	})
 
-	err := core.Write(zapcore.Entry{}, []zapcore.Field{})
+	err := core.Write(zapcore.Entry{Level: zapcore.ErrorLevel}, []zapcore.Field{})
 	require.NoError(t, err)
 
 	// Assert that a service context was attached even though service name was not set
